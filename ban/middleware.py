@@ -15,7 +15,7 @@ def ip_in(ip, nets):
             return True
     return False
 
-class Ban(object):
+class BanningMiddleware(object):
     def process_request(self, request):
         ip = request.META['REMOTE_ADDR']
         # HTTP_X_FORWARDED_FOR proxy fix
@@ -25,6 +25,9 @@ class Ban(object):
 
         deny_ips = [i.network() for i in DenyIP.objects.all()]
         allow_ips = [i.network() for i in AllowIP.objects.all()]
+        
+        if not deny_ips or allow_ips:
+            return
 
         allow = lambda: ip_in(ip, allow_ips)
         deny = lambda: ip_in(ip, deny_ips)
