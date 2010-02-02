@@ -7,7 +7,7 @@ Installation
 ============
 
 * Install *ipcalc* library.
-* Add django_ban in you INSTALLED_APPS.
+* Add ban in you INSTALLED_APPS.
 * Add option **BAN_POLICY**:  
   `BAN_POLICY = 'deny,allow'` or `BAN_POLICY = 'allow,deny'`.
 
@@ -16,7 +16,7 @@ Installation
 
   **Default value is 'allow,deny'**
 
-* Add `'django_ban.middleware.Ban'` to your `MIDDLEWARE_CLASSES`.
+* Add `'ban.middleware.BanningMiddleware'` to your `MIDDLEWARE_CLASSES`.
 * Run ./manage.py syncdb, to create necessary tables.
 * Add one or more entries to the Allow or Deny lists in the admin
   interface. You can just enter a single IP or use a network mask,
@@ -32,11 +32,3 @@ TODO
 ===
 
 * Add a text description to the list items.
-* Use html template to render Deny page.
-
-Acknowledges
-============
-
-This application is based on the Justquick's django snippet.
-You can find the original code at http://www.djangosnippets.org/snippets/725/.
-
