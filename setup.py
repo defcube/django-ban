@@ -1,10 +1,11 @@
 from distutils.core import setup
-
+ 
 setup(
-    name = "django-logjam",
+    name = "django-ban",
     version = '0.1',
-    url = 'http://github.com/justquick/django-logjam',
-    author = 'Justin Quick',
-    description = 'Optimized error reporting for Django',
-    packages = ['logjam']
+    url = 'http://github.com/justquick/django-ban',
+    author = 'Alexander Artemenko, Justin Quick',
+    description = 'Simple middleware to ban users by IP or IP network ',
+    packages = ['ban']
 )
+ 
