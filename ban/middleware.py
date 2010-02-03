@@ -3,56 +3,51 @@ from django.template.loader import render_to_string
 from django.http import HttpResponseForbidden
 from django.conf import settings
 
-from models import DenyIP, AllowIP
+from models import DeniedIP, AllowedIP
 
-splits = lambda x: x.replace(' ','').split(',')
-order = getattr(settings, 'BAN_POLICY', 'allow,deny')
-opts = filter(None, splits(order)[:2])
-
-def ip_in(ip, nets):
-    for net in nets:
-        if ip in net:
+def ip_in(ip, model):
+    """
+    Returns True if the given ip address is in one of the ban models
+    """
+    for i in model.objects.all():
+        if ip in i.network():
             return True
     return False
 
-class BanningMiddleware(object):
+def get_ip(request):
+    """
+    Gets the true client IP address of the request
+    Contains proxy handling involving HTTP_X_FORWARDED_FOR and multiple addresses
+    """
+    ip = request.META['REMOTE_ADDR']
+    if (not ip or ip == '127.0.0.1') and 'HTTP_X_FORWARDED_FOR' in request.META:
+        ip = request.META['HTTP_X_FORWARDED_FOR']
+    return ip.replace(',','').split()[0] # choose first of (possibly) multiple values
+
+def forbid(request):
+    """
+    Forbids a user to access the site
+    Cleans up their session (if it exists)
+    Returns a templated HttpResponseForbidden when banning requests
+    Override the `403.html` template to customize the error report
+    """
+    for k in request.session.keys():
+        del request.session[k]
+    return HttpResponseForbidden(render_to_string('403.html',
+                context_instance=RequestContext(request)))
+    
+class DenyMiddleware(object):
+    """
+    Forbids any request if they are in the DeniedIP list
+    """
     def process_request(self, request):
-        ip = request.META['REMOTE_ADDR']
-        # HTTP_X_FORWARDED_FOR proxy fix
-        if (not ip or ip == '127.0.0.1') and 'HTTP_X_FORWARDED_FOR' in request.META:
-            # choose first of (possibly) multiple values
-            ip = splits(request.META['HTTP_X_FORWARDED_FOR'])[0]
+        if ip_in(get_ip(request), DeniedIP):
+            return forbid(request)
 
-        deny_ips = [i.network() for i in DenyIP.objects.all()]
-        allow_ips = [i.network() for i in AllowIP.objects.all()]
-        
-        if not deny_ips or allow_ips:
-            return
-
-        allow = lambda: ip_in(ip, allow_ips)
-        deny = lambda: ip_in(ip, deny_ips)
-
-        is_banned = True
-        if opts and opts[-1] == 'allow':
-            is_banned = False
-
-        if opts:
-            for opt in opts:
-                if opt == 'allow' and allow():
-                    is_banned = False
-                    break
-                elif opt == 'deny' and deny():
-                    is_banned = True
-                    break
-        else:
-            if allow(): is_banned = False
-            elif deny(): is_banned = True
-
-        if is_banned:
-            # delete sessions when denied
-            for k in request.session.keys():
-                del request.session[k]
-            # returns a 403 error page, override template to customize
-            return HttpResponseForbidden(render_to_string('403.html',
-                        context_instance=RequestContext(request)))
-
+class AllowMiddleware(object):
+    """
+    Forbids any request if they are not in the AllowedIP list
+    """
+    def process_request(self, request):
+        if not ip_in(get_ip(request), AllowedIP):
+            return forbid(request)

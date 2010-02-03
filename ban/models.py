@@ -20,12 +20,12 @@ class IP(models.Model):
     class Meta:
         abstract = True
         
-class DenyIP(IP):
+class DeniedIP(IP):
     class Meta:
         verbose_name = _('Denied IP')
         verbose_name_plural = _('Denied IPs')
         
-class AllowIP(IP):
+class AllowedIP(IP):
     class Meta:
         verbose_name = _('Allowed IP')
         verbose_name_plural = _('Allowed IPs') 

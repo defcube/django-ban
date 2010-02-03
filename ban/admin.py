@@ -1,5 +1,9 @@
+from django.conf import settings
 from django.contrib import admin
-from models import AllowIP, DenyIP
+from models import DeniedIP, AllowedIP
 
-admin.site.register(AllowIP)
-admin.site.register(DenyIP)
+if 'ban.middleware.DenyMiddleware' in settings.MIDDLEWARE_CLASSES:
+    admin.site.register(DeniedIP)
+    
+if 'ban.middleware.AllowMiddleware' in settings.MIDDLEWARE_CLASSES:
+    admin.site.register(AllowedIP)
