@@ -6,6 +6,7 @@ from django.conf import settings
 from models import DeniedIP, AllowedIP
 
 METHODS = getattr(settings, 'BAN_METHODS', ('POST',))
+WHITELIST = getattr(settings, 'BAN_WHITELIST', ())
 
 def ip_in(ip, model):
     """
@@ -43,9 +44,10 @@ class DenyMiddleware(object):
     Forbids any request if they are in the DeniedIP list
     """
     def process_request(self, request):
-        if not request.method in METHODS:
+        ip = get_ip(request)
+        if not request.method in METHODS or ip in WHITELIST:
             return
-        if ip_in(get_ip(request), DeniedIP):
+        if ip_in(ip, DeniedIP):
             return forbid(request)
 
 class AllowMiddleware(object):
