@@ -12,9 +12,12 @@ def ip_in(ip, model):
     """
     Returns True if the given ip address is in one of the ban models
     """
-    for i in model.objects.all():
-        if ip in i.network():
-            return True
+    try:
+        for i in model.objects.all():
+            if ip in i.network():
+                return True
+    except ValueError:
+        pass
     return False
 
 def get_ip(request):
